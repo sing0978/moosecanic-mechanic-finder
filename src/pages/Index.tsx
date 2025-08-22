@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, List, Wrench, Star, Phone } from "lucide-react";
+import { Search, MapPin, List, Wrench, Star, Phone, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 import ServiceCategory from "@/components/ServiceCategory";
 import MechanicCard from "@/components/MechanicCard";
@@ -14,6 +15,66 @@ import { serviceCategories, mockMechanics } from "@/data/mockData";
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
+  const [loading, setLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { toast } = useToast();
+
+  const handleFindMechanics = async () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Location not supported",
+        description: "Your browser doesn't support geolocation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setLoading(false);
+        
+        // Scroll to results section
+        const resultsSection = document.querySelector('#results-section');
+        resultsSection?.scrollIntoView({ behavior: 'smooth' });
+        
+        toast({
+          title: "Location found!",
+          description: `Showing mechanics near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+        });
+      },
+      (error) => {
+        setLoading(false);
+        let message = "Unable to get your location.";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Location access denied. Please enable location permissions.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Location information unavailable.";
+            break;
+          case error.TIMEOUT:
+            message = "Location request timed out.";
+            break;
+        }
+        
+        toast({
+          title: "Location Error",
+          description: message,
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   const filteredMechanics = selectedCategory === "All" 
     ? mockMechanics 
@@ -45,9 +106,19 @@ const Index = () => {
               Compare services, read reviews, and book appointments instantly.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="lg" className="text-lg px-8">
-                <MapPin className="w-5 h-5 mr-2" />
-                Find Mechanics Now
+              <Button 
+                variant="hero" 
+                size="lg" 
+                className="text-lg px-8"
+                onClick={handleFindMechanics}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <MapPin className="w-5 h-5 mr-2" />
+                )}
+                {loading ? "Finding Mechanics..." : "Find Mechanics Now"}
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
                 <Wrench className="w-5 h-5 mr-2" />
@@ -83,7 +154,7 @@ const Index = () => {
         </section>
 
         {/* Search & Filters */}
-        <Card className="mb-8 bg-gradient-card border-0 shadow-card">
+        <Card id="results-section" className="mb-8 bg-gradient-card border-0 shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="w-5 h-5 text-primary" />
