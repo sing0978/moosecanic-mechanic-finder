@@ -14,13 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      mechanics: {
+        Row: {
+          address: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_verified: boolean | null
+          latitude: number
+          longitude: number
+          name: string
+          phone: string
+          rating: number | null
+          shop_name: string
+          specialties: string[] | null
+          total_reviews: number | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          latitude: number
+          longitude: number
+          name: string
+          phone: string
+          rating?: number | null
+          shop_name: string
+          specialties?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          phone?: string
+          rating?: number | null
+          shop_name?: string
+          specialties?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          mechanic_id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_id: string
+          name: string
+          price: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mechanic_id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_mechanic_id_fkey"
+            columns: ["mechanic_id"]
+            isOneToOne: false
+            referencedRelation: "mechanics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
+      get_nearby_mechanics: {
+        Args: { radius_km?: number; user_lat: number; user_lng: number }
+        Returns: {
+          address: string
+          description: string
+          distance_km: number
+          email: string
+          id: string
+          image_url: string
+          latitude: number
+          longitude: number
+          name: string
+          phone: string
+          rating: number
+          shop_name: string
+          specialties: string[]
+          total_reviews: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
