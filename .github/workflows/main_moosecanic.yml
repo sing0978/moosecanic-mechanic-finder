@@ -54,7 +54,8 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_35234DB3C15F450C8E28551A394DE637 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4B42D6DE489049C48281155CE0290CB9 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1C2174E84F7E4AD89C71A42AB2AF1A1A }}
-
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -63,4 +64,5 @@ jobs:
           slot-name: 'Production'
           package: dist
           
+
 
