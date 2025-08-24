@@ -34,6 +34,7 @@ const Index = () => {
 
     setLoading(true);
     
+    // Get fresh, real-time GPS coordinates with high accuracy
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -45,36 +46,36 @@ const Index = () => {
         resultsSection?.scrollIntoView({ behavior: 'smooth' });
         
         toast({
-          title: "Location found!",
-          description: `Showing mechanics near ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+          title: "GPS location acquired!",
+          description: `Searching for live mechanics near ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
         });
       },
       (error) => {
         setLoading(false);
-        let message = "Unable to get your location.";
+        let message = "Unable to get your current GPS location.";
         
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            message = "Location access denied. Please enable location permissions.";
+            message = "Location access denied. Please enable location permissions and try again.";
             break;
           case error.POSITION_UNAVAILABLE:
-            message = "Location information unavailable.";
+            message = "GPS location information unavailable. Please check your device settings.";
             break;
           case error.TIMEOUT:
-            message = "Location request timed out.";
+            message = "GPS location request timed out. Please try again.";
             break;
         }
         
         toast({
-          title: "Location Error",
+          title: "GPS Location Error",
           description: message,
           variant: "destructive",
         });
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+        enableHighAccuracy: true, // Use GPS for maximum accuracy
+        timeout: 15000, // Extended timeout for GPS
+        maximumAge: 0 // Always get fresh location, no caching
       }
     );
   };
@@ -176,14 +177,14 @@ const Index = () => {
                 {mechanicsLoading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Searching for mechanics...
+                    Searching for live mechanics near your GPS location...
                   </span>
                 ) : userLocation ? (
-                  `Found ${filteredMechanics.length} mechanics near you`
+                  `${filteredMechanics.length} live mechanics available within 25km of your location`
                 ) : (
-                  `${filteredMechanics.length} mechanics available. Click "Find Mechanics Now" to show nearby ones.`
+                  `Click "Find Mechanics Now" to get live mechanics near your GPS location`
                 )}
-                {selectedCategory !== "All" && !mechanicsLoading && ` for ${selectedCategory}`}
+                {selectedCategory !== "All" && !mechanicsLoading && ` specializing in ${selectedCategory}`}
               </p>
               <div className="flex gap-2">
                 <Button

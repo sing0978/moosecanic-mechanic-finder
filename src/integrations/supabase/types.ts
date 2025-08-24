@@ -23,6 +23,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          is_available: boolean
           is_verified: boolean | null
           latitude: number
           longitude: number
@@ -42,6 +43,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_available?: boolean
           is_verified?: boolean | null
           latitude: number
           longitude: number
@@ -61,6 +63,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_available?: boolean
           is_verified?: boolean | null
           latitude?: number
           longitude?: number

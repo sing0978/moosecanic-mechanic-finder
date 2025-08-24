@@ -15,16 +15,43 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
     }
   }, [userLocation]);
 
+  // Set up real-time subscription for mechanics availability changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('mechanics-availability')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'mechanics'
+        },
+        (payload) => {
+          console.log('Mechanic availability changed:', payload);
+          // Refetch nearby mechanics when availability changes
+          if (userLocation) {
+            fetchNearbyMechanics(userLocation.lat, userLocation.lng);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userLocation]);
+
   const fetchNearbyMechanics = async (lat: number, lng: number) => {
     setLoading(true);
     setError(null);
     
     try {
+      // Fetch real-time data of only available mechanics near current GPS location
       const { data, error } = await supabase
         .rpc('get_nearby_mechanics', {
           user_lat: lat,
           user_lng: lng,
-          radius_km: 50
+          radius_km: 25 // Reduced radius for more accurate nearby results
         });
 
       if (error) {
@@ -51,15 +78,20 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
 
       setMechanics(transformedMechanics);
       
+      const message = transformedMechanics.length > 0 
+        ? `Found ${transformedMechanics.length} available mechanics within 25km`
+        : "No mechanics currently available in your area. Try expanding your search radius.";
+      
       toast({
-        title: "Mechanics found!",
-        description: `Found ${transformedMechanics.length} mechanics near you`,
+        title: transformedMechanics.length > 0 ? "Live mechanics found!" : "No mechanics nearby",
+        description: message,
+        variant: transformedMechanics.length > 0 ? "default" : "destructive"
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch mechanics';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch live mechanic data';
       setError(errorMessage);
       toast({
-        title: "Error fetching mechanics",
+        title: "Error fetching live data",
         description: errorMessage,
         variant: "destructive",
       });
@@ -68,5 +100,10 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
     }
   };
 
-  return { mechanics, loading, error, refetch: () => userLocation && fetchNearbyMechanics(userLocation.lat, userLocation.lng) };
+  return { 
+    mechanics, 
+    loading, 
+    error, 
+    refetch: () => userLocation && fetchNearbyMechanics(userLocation.lat, userLocation.lng) 
+  };
 };
