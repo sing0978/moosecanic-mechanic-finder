@@ -2,19 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Phone, MapPin, Wrench } from "lucide-react";
-
-interface Mechanic {
-  id: string;
-  name: string;
-  shopName: string;
-  address: string;
-  phone: string;
-  rating: number;
-  reviewCount: number;
-  services: Array<{ name: string; price: string }>;
-  distance: string;
-  specialties: string[];
-}
+import { Mechanic } from "@/types/mechanic";
 
 interface MechanicCardProps {
   mechanic: Mechanic;
@@ -38,17 +26,17 @@ const MechanicCard = ({ mechanic }: MechanicCardProps) => {
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-semibold text-lg text-foreground">{mechanic.name}</h3>
-            <p className="text-primary font-medium">{mechanic.shopName}</p>
+            <p className="text-primary font-medium">{mechanic.shop_name}</p>
           </div>
           <Badge variant="secondary" className="text-xs">
-            {mechanic.distance}
+            {mechanic.distance_km ? `${mechanic.distance_km.toFixed(1)} km` : 'Distance unknown'}
           </Badge>
         </div>
         
         <div className="flex items-center gap-1 mt-2">
           <div className="flex">{renderStars(mechanic.rating)}</div>
           <span className="text-sm text-muted-foreground ml-1">
-            {mechanic.rating} ({mechanic.reviewCount} reviews)
+            {mechanic.rating} ({mechanic.total_reviews} reviews)
           </span>
         </div>
       </CardHeader>
@@ -70,17 +58,19 @@ const MechanicCard = ({ mechanic }: MechanicCardProps) => {
           </div>
           
           <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">Featured Services:</p>
-            {mechanic.services.slice(0, 3).map((service, index) => (
-              <div key={index} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{service.name}</span>
-                <span className="text-primary font-medium">{service.price}</span>
-              </div>
-            ))}
+            <p className="text-sm font-medium text-foreground">Specialties:</p>
+            <p className="text-sm text-muted-foreground">
+              {mechanic.description || "Professional automotive services"}
+            </p>
           </div>
           
           <div className="flex gap-2 pt-2">
-            <Button variant="default" size="sm" className="flex-1">
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="flex-1"
+              onClick={() => window.open(`tel:${mechanic.phone}`, '_self')}
+            >
               <Phone className="w-4 h-4 mr-1" />
               Call Now
             </Button>

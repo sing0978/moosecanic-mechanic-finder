@@ -10,7 +10,9 @@ import ServiceCategory from "@/components/ServiceCategory";
 import MechanicCard from "@/components/MechanicCard";
 import MechanicMap from "@/components/MechanicMap";
 import heroImage from "@/assets/hero-mechanic.jpg";
-import { serviceCategories, mockMechanics } from "@/data/mockData";
+import { serviceCategories } from "@/data/mockData";
+import { useMechanics } from "@/hooks/useMechanics";
+import { Mechanic } from "@/types/mechanic";
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -18,6 +20,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { toast } = useToast();
+  const { mechanics, loading: mechanicsLoading } = useMechanics(userLocation);
 
   const handleFindMechanics = async () => {
     if (!navigator.geolocation) {
@@ -77,8 +80,8 @@ const Index = () => {
   };
 
   const filteredMechanics = selectedCategory === "All" 
-    ? mockMechanics 
-    : mockMechanics.filter(mechanic => 
+    ? mechanics 
+    : mechanics.filter((mechanic: Mechanic) => 
         mechanic.specialties.some(specialty => 
           specialty.toLowerCase().includes(selectedCategory.toLowerCase()) ||
           selectedCategory.toLowerCase().includes(specialty.toLowerCase())
@@ -170,8 +173,17 @@ const Index = () => {
             
             <div className="flex justify-between items-center">
               <p className="text-sm text-muted-foreground">
-                Found {filteredMechanics.length} mechanics
-                {selectedCategory !== "All" && ` for ${selectedCategory}`}
+                {mechanicsLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Searching for mechanics...
+                  </span>
+                ) : userLocation ? (
+                  `Found ${filteredMechanics.length} mechanics near you`
+                ) : (
+                  `${filteredMechanics.length} mechanics available. Click "Find Mechanics Now" to show nearby ones.`
+                )}
+                {selectedCategory !== "All" && !mechanicsLoading && ` for ${selectedCategory}`}
               </p>
               <div className="flex gap-2">
                 <Button
