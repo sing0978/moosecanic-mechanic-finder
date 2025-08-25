@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - moosecanic
+name: Build and deploy Node.js app to Azure Web App - Moosecanic
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22.x'
+          node-version: '20.x'
 
       - name: npm install, build, and test
         run: |
@@ -51,18 +51,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_35234DB3C15F450C8E28551A394DE637 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4B42D6DE489049C48281155CE0290CB9 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1C2174E84F7E4AD89C71A42AB2AF1A1A }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_21252A579CEF4A8DA99837FC3A88AE64 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4834D3FDF4014EB4B87FCC58564E2DF1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2CEE1E416ACF4CDE91FA1680570D3275 }}
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'moosecanic'
+          app-name: 'Moosecanic'
           slot-name: 'Production'
-          package: dist
+          package: .
           
-
-
