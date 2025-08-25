@@ -38,7 +38,12 @@ serve(async (req) => {
 
     // Search for car repair shops and mechanics using new Places API
     const searchBody = {
-      includedTypes: ['car_repair'],
+      includedTypes: ['car_repair',
+  'mechanic',
+  'auto_repair',
+  'car_service',
+  'car_parts'
+  ],
       maxResultCount: 20,
       locationRestriction: {
         circle: {
