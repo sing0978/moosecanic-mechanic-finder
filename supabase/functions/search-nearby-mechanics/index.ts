@@ -8,17 +8,17 @@ interface PlaceSearchRequest {
 }
 
 interface PlaceResult {
-  place_id: string;
-  name: string;
-  vicinity: string;
-  geometry: {
-    location: {
-      lat: number;
-      lng: number;
-    };
+  id: string;
+  displayName: {
+    text: string;
+  };
+  formattedAddress: string;
+  location: {
+    latitude: number;
+    longitude: number;
   };
   rating?: number;
-  user_ratings_total?: number;
+  userRatingCount?: number;
   types: string[];
 }
 
@@ -36,39 +36,56 @@ serve(async (req) => {
       throw new Error('Google Places API key not configured');
     }
 
-    // Search for car repair shops and mechanics
-    const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
-    searchUrl.searchParams.set('location', `${latitude},${longitude}`);
-    searchUrl.searchParams.set('radius', radius.toString());
-    searchUrl.searchParams.set('type', 'car_repair');
-    searchUrl.searchParams.set('key', GOOGLE_PLACES_API_KEY);
+    // Search for car repair shops and mechanics using new Places API
+    const searchBody = {
+      includedTypes: ['car_repair'],
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: {
+          center: {
+            latitude: latitude,
+            longitude: longitude
+          },
+          radius: radius
+        }
+      }
+    };
 
-    const response = await fetch(searchUrl.toString());
+    const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types'
+      },
+      body: JSON.stringify(searchBody)
+    });
+
     const data = await response.json();
 
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    if (!response.ok) {
       console.error('Google Places API error:', data);
-      throw new Error(`Google Places API error: ${data.status}`);
+      throw new Error(`Google Places API error: ${data.error?.message || response.status}`);
     }
 
     // Transform Google Places results to our mechanic format
-    const mechanics = data.results?.map((place: PlaceResult) => ({
-      id: `google_${place.place_id}`,
-      name: place.name,
-      shop_name: place.name,
-      address: place.vicinity || 'Address not available',
+    const mechanics = data.places?.map((place: PlaceResult) => ({
+      id: `google_${place.id}`,
+      name: place.displayName?.text || 'Unknown Business',
+      shop_name: place.displayName?.text || 'Unknown Business',
+      address: place.formattedAddress || 'Address not available',
       phone: 'Call for details',
-      latitude: place.geometry.location.lat,
-      longitude: place.geometry.location.lng,
+      latitude: place.location?.latitude || 0,
+      longitude: place.location?.longitude || 0,
       rating: place.rating || 0,
-      total_reviews: place.user_ratings_total || 0,
+      total_reviews: place.userRatingCount || 0,
       specialties: ['General Automotive Repair'],
       description: 'Professional automotive services',
       distance_km: calculateDistance(
         latitude,
         longitude,
-        place.geometry.location.lat,
-        place.geometry.location.lng
+        place.location?.latitude || 0,
+        place.location?.longitude || 0
       ),
       source: 'google_places'
     })) || [];
