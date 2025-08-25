@@ -2,16 +2,24 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Mechanic } from "@/types/mechanic";
 import { useToast } from "@/hooks/use-toast";
+import { searchNearbyMechanics, PlacesMechanic } from "@/services/placesService";
 
-export const useMechanics = (userLocation: { lat: number; lng: number } | null) => {
-  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
+interface UseMechanicsReturn {
+  mechanics: PlacesMechanic[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+export const useMechanics = (userLocation: { lat: number; lng: number } | null): UseMechanicsReturn => {
+  const [mechanics, setMechanics] = useState<PlacesMechanic[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (userLocation) {
-      fetchNearbyMechanics(userLocation.lat, userLocation.lng);
+      fetchNearbyMechanics();
     }
   }, [userLocation]);
 
@@ -30,7 +38,7 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
           console.log('Mechanic availability changed:', payload);
           // Refetch nearby mechanics when availability changes
           if (userLocation) {
-            fetchNearbyMechanics(userLocation.lat, userLocation.lng);
+            fetchNearbyMechanics();
           }
         }
       )
@@ -41,58 +49,48 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
     };
   }, [userLocation]);
 
-  const fetchNearbyMechanics = async (lat: number, lng: number) => {
+  const fetchNearbyMechanics = async () => {
+    if (!userLocation) return;
+
     setLoading(true);
     setError(null);
-    
-    try {
-      // Fetch real-time data of only available mechanics near current GPS location
-      const { data, error } = await supabase
-        .rpc('get_nearby_mechanics', {
-          user_lat: lat,
-          user_lng: lng,
-          radius_km: 25 // Reduced radius for more accurate nearby results
-        });
 
-      if (error) {
-        throw error;
+    try {
+      console.log('Fetching mechanics for location:', userLocation);
+      
+      const mechanics = await searchNearbyMechanics(
+        userLocation.lat,
+        userLocation.lng,
+        25000 // 25km radius in meters
+      );
+
+      console.log('Found mechanics:', mechanics);
+
+      if (!mechanics || mechanics.length === 0) {
+        setMechanics([]);
+        toast({
+          title: "No mechanics nearby",
+          description: "We couldn't find any mechanics in your area. Try expanding your search radius.",
+          variant: "default",
+        });
+        return;
       }
 
-      // Transform the data to match our Mechanic interface
-      const transformedMechanics: Mechanic[] = (data || []).map((mechanic: any) => ({
-        id: mechanic.id,
-        name: mechanic.name,
-        shop_name: mechanic.shop_name,
-        address: mechanic.address,
-        phone: mechanic.phone,
-        email: mechanic.email,
-        latitude: parseFloat(mechanic.latitude),
-        longitude: parseFloat(mechanic.longitude),
-        rating: parseFloat(mechanic.rating),
-        total_reviews: mechanic.total_reviews,
-        image_url: mechanic.image_url,
-        description: mechanic.description,
-        specialties: mechanic.specialties || [],
-        distance_km: mechanic.distance_km
-      }));
-
-      setMechanics(transformedMechanics);
-      
-      const message = transformedMechanics.length > 0 
-        ? `Found ${transformedMechanics.length} available mechanics within 25km`
-        : "No mechanics currently available in your area. Try expanding your search radius.";
+      setMechanics(mechanics);
       
       toast({
-        title: transformedMechanics.length > 0 ? "Live mechanics found!" : "No mechanics nearby",
-        description: message,
-        variant: transformedMechanics.length > 0 ? "default" : "destructive"
+        title: "Mechanics found!",
+        description: `Found ${mechanics.length} mechanics nearby.`,
       });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch live mechanic data';
-      setError(errorMessage);
+
+    } catch (err: any) {
+      console.error('Error fetching mechanics:', err);
+      setError(err.message || 'Failed to fetch mechanics');
+      setMechanics([]);
+      
       toast({
-        title: "Error fetching live data",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to find nearby mechanics. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -104,6 +102,6 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null) 
     mechanics, 
     loading, 
     error, 
-    refetch: () => userLocation && fetchNearbyMechanics(userLocation.lat, userLocation.lng) 
+    refetch: fetchNearbyMechanics
   };
 };

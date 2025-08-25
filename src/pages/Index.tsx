@@ -13,6 +13,7 @@ import heroImage from "@/assets/hero-mechanic.jpg";
 import { serviceCategories } from "@/data/mockData";
 import { useMechanics } from "@/hooks/useMechanics";
 import { Mechanic } from "@/types/mechanic";
+import { PlacesMechanic } from "@/services/placesService";
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -82,8 +83,8 @@ const Index = () => {
 
   const filteredMechanics = selectedCategory === "All" 
     ? mechanics 
-    : mechanics.filter((mechanic: Mechanic) => 
-        mechanic.specialties.some(specialty => 
+    : mechanics.filter((mechanic: Mechanic | PlacesMechanic) => 
+        mechanic.specialties?.some(specialty => 
           specialty.toLowerCase().includes(selectedCategory.toLowerCase()) ||
           selectedCategory.toLowerCase().includes(specialty.toLowerCase())
         )
@@ -212,10 +213,44 @@ const Index = () => {
         {viewMode === "map" ? (
           <MechanicMap />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMechanics.map((mechanic) => (
-              <MechanicCard key={mechanic.id} mechanic={mechanic} />
-            ))}
+          <div>
+            {mechanicsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse bg-muted rounded-lg h-48" />
+                ))}
+              </div>
+            ) : filteredMechanics.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredMechanics.map((mechanic) => (
+                  <MechanicCard key={mechanic.id} mechanic={mechanic} />
+                ))}
+              </div>
+            ) : userLocation ? (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+                    <Wrench className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No mechanics found nearby</h3>
+                  <p className="text-muted-foreground">
+                    We couldn't find any mechanics in your area right now. Try expanding your search or check back later.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Location needed</h3>
+                  <p className="text-muted-foreground">
+                    Please click "Find Mechanics Now" to share your location and discover nearby automotive services.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

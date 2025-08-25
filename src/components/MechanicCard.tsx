@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Phone, MapPin, Wrench } from "lucide-react";
 import { Mechanic } from "@/types/mechanic";
+import { PlacesMechanic } from "@/services/placesService";
 
 interface MechanicCardProps {
-  mechanic: Mechanic;
+  mechanic: Mechanic | PlacesMechanic;
 }
 
 const MechanicCard = ({ mechanic }: MechanicCardProps) => {
