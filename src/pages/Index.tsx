@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,19 +9,35 @@ import { useToast } from "@/hooks/use-toast";
 import ServiceCategory from "@/components/ServiceCategory";
 import MechanicCard from "@/components/MechanicCard";
 import MechanicMap from "@/components/MechanicMap";
+import MechanicProfile from "@/components/MechanicProfile";
 import heroImage from "@/assets/hero-mechanic.jpg";
-import { serviceCategories } from "@/data/mockData";
 import { useMechanics } from "@/hooks/useMechanics";
-import { Mechanic } from "@/types/mechanic";
-import { PlacesMechanic } from "@/services/placesService";
+import { Mechanic, ServiceCategory as ServiceCategoryType } from "@/types/mechanic";
+import { PlacesMechanic, getServiceCategories } from "@/services/placesService";
 
 const Index = () => {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategoryType[]>([]);
+  const [selectedMechanic, setSelectedMechanic] = useState<Mechanic | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const { toast } = useToast();
-  const { mechanics, loading: mechanicsLoading } = useMechanics(userLocation);
+  const { mechanics, loading: mechanicsLoading } = useMechanics(userLocation, selectedCategory === "all" ? undefined : selectedCategory);
+
+  // Load service categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await getServiceCategories();
+        setServiceCategories(categories);
+      } catch (error) {
+        console.error('Error loading service categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const handleFindMechanics = async () => {
     if (!navigator.geolocation) {
@@ -81,14 +97,13 @@ const Index = () => {
     );
   };
 
-  const filteredMechanics = selectedCategory === "All" 
-    ? mechanics 
-    : mechanics.filter((mechanic: Mechanic | PlacesMechanic) => 
-        mechanic.specialties?.some(specialty => 
-          specialty.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-          selectedCategory.toLowerCase().includes(specialty.toLowerCase())
-        )
-      );
+  // Mechanics are already filtered by the backend based on selectedCategory
+  const filteredMechanics = mechanics;
+
+  const handleMechanicClick = (mechanic: Mechanic | PlacesMechanic) => {
+    setSelectedMechanic(mechanic);
+    setProfileOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,7 +200,7 @@ const Index = () => {
                 ) : (
                   `Click "Find Mechanics Now" to get live mechanics near your GPS location`
                 )}
-                {selectedCategory !== "All" && !mechanicsLoading && ` specializing in ${selectedCategory}`}
+                {selectedCategory !== "all" && !mechanicsLoading && ` in selected category`}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -223,7 +238,9 @@ const Index = () => {
             ) : filteredMechanics.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredMechanics.map((mechanic) => (
-                  <MechanicCard key={mechanic.id} mechanic={mechanic} />
+                  <div key={mechanic.id} onClick={() => handleMechanicClick(mechanic)}>
+                    <MechanicCard mechanic={mechanic} />
+                  </div>
                 ))}
               </div>
             ) : userLocation ? (
@@ -270,6 +287,13 @@ const Index = () => {
           </Card>
         </section>
       </main>
+
+      {/* Mechanic Profile Modal */}
+      <MechanicProfile 
+        mechanic={selectedMechanic}
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
     </div>
   );
 };

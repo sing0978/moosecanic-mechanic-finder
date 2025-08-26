@@ -22,7 +22,7 @@ const MechanicCard = ({ mechanic }: MechanicCardProps) => {
   };
 
   return (
-    <Card className="bg-gradient-card shadow-card hover:shadow-elegant transition-smooth border-0">
+    <Card className="bg-gradient-card shadow-card hover:shadow-elegant transition-smooth border-0 cursor-pointer">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>

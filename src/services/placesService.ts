@@ -9,7 +9,8 @@ export interface PlacesMechanic extends Omit<Mechanic, 'id'> {
 export const searchNearbyMechanics = async (
   latitude: number,
   longitude: number,
-  radius: number = 25000
+  radius: number = 25000,
+  categorySlug?: string
 ): Promise<PlacesMechanic[]> => {
   try {
     // Call the edge function to get Google Places results
@@ -27,13 +28,14 @@ export const searchNearbyMechanics = async (
 
     const googleMechanics = placesData?.mechanics || [];
 
-    // Also get database mechanics
+    // Also get database mechanics using the new function with category filtering
     const { data: dbMechanics, error: dbError } = await supabase.rpc(
-      'get_nearby_mechanics',
+      'get_nearby_mechanics_public',
       {
         user_lat: latitude,
         user_lng: longitude,
-        radius_km: radius / 1000
+        radius_km: radius / 1000,
+        category_slug: categorySlug || null
       }
     );
 
@@ -47,8 +49,16 @@ export const searchNearbyMechanics = async (
       source: 'database' as const
     }));
 
+    // Filter Google Places results by category if specified
+    let filteredGoogleMechanics = googleMechanics;
+    if (categorySlug && categorySlug !== 'all') {
+      filteredGoogleMechanics = googleMechanics.filter((mechanic: any) => {
+        return mechanic.service_categories?.some((cat: any) => cat.slug === categorySlug);
+      });
+    }
+
     // Combine and sort by distance
-    const allMechanics = [...googleMechanics, ...databaseMechanics];
+    const allMechanics = [...filteredGoogleMechanics, ...databaseMechanics];
     
     return allMechanics.sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
 
@@ -56,4 +66,20 @@ export const searchNearbyMechanics = async (
     console.error('Error searching nearby mechanics:', error);
     throw error;
   }
+};
+
+// Fetch service categories
+export const getServiceCategories = async () => {
+  const { data, error } = await supabase
+    .from('service_categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order');
+
+  if (error) {
+    console.error('Error fetching service categories:', error);
+    throw error;
+  }
+
+  return data;
 };

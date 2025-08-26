@@ -11,7 +11,10 @@ interface UseMechanicsReturn {
   refetch: () => void;
 }
 
-export const useMechanics = (userLocation: { lat: number; lng: number } | null): UseMechanicsReturn => {
+export const useMechanics = (
+  userLocation: { lat: number; lng: number } | null,
+  categorySlug?: string
+): UseMechanicsReturn => {
   const [mechanics, setMechanics] = useState<PlacesMechanic[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +24,7 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null):
     if (userLocation) {
       fetchNearbyMechanics();
     }
-  }, [userLocation]);
+  }, [userLocation, categorySlug]);
 
   // Set up real-time subscription for mechanics availability changes
   useEffect(() => {
@@ -61,7 +64,8 @@ export const useMechanics = (userLocation: { lat: number; lng: number } | null):
       const mechanics = await searchNearbyMechanics(
         userLocation.lat,
         userLocation.lng,
-        25000 // 25km radius in meters
+        25000, // 25km radius in meters
+        categorySlug
       );
 
       console.log('Found mechanics:', mechanics);

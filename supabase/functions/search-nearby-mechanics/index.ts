@@ -20,7 +20,45 @@ interface PlaceResult {
   rating?: number;
   userRatingCount?: number;
   types: string[];
+  websiteUri?: string;
+  nationalPhoneNumber?: string;
+  businessStatus?: string;
+  photos?: Array<{
+    name: string;
+    widthPx: number;
+    heightPx: number;
+  }>;
+  reviews?: Array<{
+    name: string;
+    rating: number;
+    text: { text: string };
+    authorAttribution: { displayName: string };
+    publishTime: string;
+  }>;
 }
+
+// Chain stores to filter out
+const CHAIN_STORES = [
+  'canadian tire',
+  'midas',
+  'kal tire',
+  'walmart',
+  'costco',
+  'jiffy lube',
+  'valvoline instant oil change',
+  'quick lube',
+  'mr. lube',
+  'great canadian oil change',
+  'petro-canada',
+  'shell',
+  'chevron',
+  'esso',
+  'husky',
+  'fountain tire',
+  'active green+ross',
+  'speedy auto service',
+  'oil changers'
+];
 
 serve(async (req) => {
   // Handle CORS
@@ -36,14 +74,15 @@ serve(async (req) => {
       throw new Error('Google Places API key not configured');
     }
 
-    // Search for car repair shops and mechanics using new Places API
+    // Search for car repair shops and mechanics using new Places API with keyword filtering
     const searchBody = {
-      includedTypes: ['car_repair',
-  'mechanic',
-  'auto_repair',
-  'car_service',
-  'car_parts'
-  ],
+      includedTypes: [
+        'car_repair',
+        'auto_repair', 
+        'car_service',
+        'car_parts'
+      ],
+      textQuery: 'auto repair mechanic shop',
       maxResultCount: 20,
       locationRestriction: {
         circle: {
@@ -56,12 +95,12 @@ serve(async (req) => {
       }
     };
 
-    const response = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types'
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types,places.websiteUri,places.nationalPhoneNumber,places.businessStatus,places.photos,places.reviews'
       },
       body: JSON.stringify(searchBody)
     });
@@ -73,8 +112,13 @@ serve(async (req) => {
       throw new Error(`Google Places API error: ${data.error?.message || response.status}`);
     }
 
-    // Transform Google Places results to our mechanic format
-    const mechanics = data.places?.map((place: PlaceResult) => ({
+    // Filter out chain stores and transform Google Places results to our mechanic format
+    const filteredPlaces = data.places?.filter((place: PlaceResult) => {
+      const businessName = place.displayName?.text?.toLowerCase() || '';
+      return !CHAIN_STORES.some(chain => businessName.includes(chain));
+    }) || [];
+
+    const mechanics = filteredPlaces.map((place: PlaceResult) => ({
       id: `google_${place.id}`,
       name: place.displayName?.text || 'Unknown Business',
       shop_name: place.displayName?.text || 'Unknown Business',
@@ -92,8 +136,22 @@ serve(async (req) => {
         place.location?.latitude || 0,
         place.location?.longitude || 0
       ),
-      source: 'google_places'
-    })) || [];
+      source: 'google_places',
+      website_url: place.websiteUri || null,
+      google_place_id: place.id,
+      business_status: place.businessStatus || null,
+      formatted_phone_number: place.nationalPhoneNumber || null,
+      photos: place.photos?.map(photo => photo.name) || [],
+      reviews: place.reviews || [],
+      service_categories: [
+        {
+          id: null,
+          name: 'General Automotive Repair',
+          slug: 'general-repair',
+          icon_name: 'wrench'
+        }
+      ]
+    }));
 
     return new Response(
       JSON.stringify({ mechanics }),

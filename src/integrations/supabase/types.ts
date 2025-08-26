@@ -14,12 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      mechanic_service_categories: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          mechanic_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          mechanic_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          mechanic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mechanic_service_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mechanic_service_categories_mechanic_id_fkey"
+            columns: ["mechanic_id"]
+            isOneToOne: false
+            referencedRelation: "mechanics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mechanics: {
         Row: {
           address: string
+          business_status: string | null
           created_at: string
           description: string | null
           email: string | null
+          formatted_phone_number: string | null
+          google_place_id: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
@@ -28,18 +67,26 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
+          opening_hours: Json | null
           phone: string
+          photos: string[] | null
+          price_range: string | null
           rating: number | null
+          reviews: Json[] | null
           shop_name: string
           specialties: string[] | null
           total_reviews: number | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           address: string
+          business_status?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
+          formatted_phone_number?: string | null
+          google_place_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -48,18 +95,26 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
+          opening_hours?: Json | null
           phone: string
+          photos?: string[] | null
+          price_range?: string | null
           rating?: number | null
+          reviews?: Json[] | null
           shop_name: string
           specialties?: string[] | null
           total_reviews?: number | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           address?: string
+          business_status?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
+          formatted_phone_number?: string | null
+          google_place_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -68,12 +123,50 @@ export type Database = {
           latitude?: number
           longitude?: number
           name?: string
+          opening_hours?: Json | null
           phone?: string
+          photos?: string[] | null
+          price_range?: string | null
           rating?: number | null
+          reviews?: Json[] | null
           shop_name?: string
           specialties?: string[] | null
           total_reviews?: number | null
           updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      service_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
         }
         Relationships: []
       }
@@ -82,7 +175,9 @@ export type Database = {
           category: string
           created_at: string
           description: string | null
+          estimated_duration_minutes: number | null
           id: string
+          is_popular: boolean | null
           mechanic_id: string
           name: string
           price: number
@@ -91,7 +186,9 @@ export type Database = {
           category: string
           created_at?: string
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
+          is_popular?: boolean | null
           mechanic_id: string
           name: string
           price: number
@@ -100,7 +197,9 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
+          is_popular?: boolean | null
           mechanic_id?: string
           name?: string
           price?: number
@@ -141,6 +240,33 @@ export type Database = {
           shop_name: string
           specialties: string[]
           total_reviews: number
+        }[]
+      }
+      get_nearby_mechanics_public: {
+        Args: {
+          category_slug?: string
+          radius_km?: number
+          user_lat: number
+          user_lng: number
+        }
+        Returns: {
+          address: string
+          business_status: string
+          description: string
+          distance_km: number
+          google_place_id: string
+          id: string
+          image_url: string
+          latitude: number
+          longitude: number
+          name: string
+          price_range: string
+          rating: number
+          service_categories: Json
+          shop_name: string
+          specialties: string[]
+          total_reviews: number
+          website_url: string
         }[]
       }
     }
