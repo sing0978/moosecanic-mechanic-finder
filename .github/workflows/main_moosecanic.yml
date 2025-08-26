@@ -47,7 +47,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: ./dist  # ✅ Important! Put it in ./dist so Azure can deploy it
+          path: ./ # ✅ Important! Put it in ./dist so Azure can deploy it
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -62,3 +62,4 @@ jobs:
           app-name: 'Moosecanic'
           slot-name: 'Production'
           package: ./dist  # ✅ Now this will contain your built site
+
