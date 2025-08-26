@@ -61,6 +61,7 @@ jobs:
         with:
           app-name: 'Moosecanic'
           slot-name: 'Production'
-          package: ./dist
+          package: ./build
 
           
+
