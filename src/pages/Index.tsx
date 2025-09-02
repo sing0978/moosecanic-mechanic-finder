@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, List, Wrench, Star, Phone, Loader2 } from "lucide-react";
+import { Search, MapPin, List, Wrench, Star, Phone, Loader2, User, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 import ServiceCategory from "@/components/ServiceCategory";
 import MechanicCard from "@/components/MechanicCard";
@@ -12,6 +14,7 @@ import MechanicMap from "@/components/MechanicMap";
 import MechanicProfile from "@/components/MechanicProfile";
 import heroImage from "@/assets/hero-mechanic.jpg";
 import { useMechanics } from "@/hooks/useMechanics";
+import { useAuth } from "@/hooks/useAuth";
 import { Mechanic, ServiceCategory as ServiceCategoryType } from "@/types/mechanic";
 import { PlacesMechanic, getServiceCategories } from "@/services/placesService";
 
@@ -24,6 +27,7 @@ const Index = () => {
   const [selectedMechanic, setSelectedMechanic] = useState<Mechanic | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const { toast } = useToast();
+  const { user, userRole, profile, signOut, loading: authLoading } = useAuth();
   const { mechanics, loading: mechanicsLoading } = useMechanics(userLocation, selectedCategory === "all" ? undefined : selectedCategory);
 
   // Load service categories on component mount
@@ -115,7 +119,7 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary-glow/60" />
         
-        <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
+        <div className="relative z-10 container mx-auto px-4 h-full flex items-center justify-between">
           <div className="max-w-2xl text-primary-foreground">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
               Find Trusted Mechanics
@@ -140,12 +144,54 @@ const Index = () => {
                 )}
                 {loading ? "Finding Mechanics..." : "Find Mechanics Now"}
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
-                <Wrench className="w-5 h-5 mr-2" />
-                Join as Mechanic
-              </Button>
+              {user && userRole === 'mechanic' ? (
+                <Button variant="outline" size="lg" className="text-lg px-8 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+                  <Wrench className="w-5 h-5 mr-2" />
+                  Manage My Services
+                </Button>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="lg" className="text-lg px-8 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+                    <Wrench className="w-5 h-5 mr-2" />
+                    Join as Mechanic
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
+          
+          {/* User Menu */}
+          {!authLoading && (
+            <div className="text-primary-foreground">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="lg" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+                      <User className="w-5 h-5 mr-2" />
+                      {profile?.full_name || user.email}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem disabled>
+                      <User className="w-4 h-4 mr-2" />
+                      Role: {userRole}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline" size="lg" className="bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
+                    <User className="w-5 h-5 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
