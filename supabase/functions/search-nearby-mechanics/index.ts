@@ -76,15 +76,9 @@ serve(async (req) => {
 
     // Search for car repair shops and mechanics using new Places API with keyword filtering
     const searchBody = {
-      includedTypes: [
-        'car_repair',
-        'auto_repair', 
-        'car_service',
-        'car_parts'
-      ],
-      textQuery: 'auto repair mechanic shop',
+      textQuery: 'auto repair mechanic shop car service',
       maxResultCount: 20,
-      locationRestriction: {
+      locationBias: {
         circle: {
           center: {
             latitude: latitude,
